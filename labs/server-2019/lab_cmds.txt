@@ -1,0 +1,482 @@
+!!!!!!!!!!!!!! 
+!
+!
+!
+!
+!
+!
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!             PART 1: Installing, Configuring and Integrating            !!!!!
+!!!!!                  Windows Server 2019 and Fedora 35                     !!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!             LAB 1: INSTALLING SERVERS AND A WORKSTATION                      !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 1.1 Creating Virtual Machines
+!
+!SERVERA    Username Administrator Password Pa$$w0rd
+!SERVERB    Username Administrator Password Pa$$w0rd
+!WIN10      Username Administrator Password Pa$$w0rd
+!
+!!! Exercise 1.2 Performing a Clean Installation of Windows Server 2019
+!
+!!! Exercise 1.3 Performing a Clean Installation of Windows 10
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!       LAB 2: CONFIGURING WINDOWS 2019 SERVERS AND WINDOWS 10 WORKSTATION     !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 2.1 Completing Post-Installation Tasks – Servers
+!
+!!! Exercise 2.2 Completing Post-Installation Tasks – Workstation
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!                 LAB 3: INSTALLING AND CONFIGURING FEDORA 35                  !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 3.1 Creating a Virtual Machine
+!
+!!! Exercise 3.2 Performing a Clean Installation of Fedora 35
+!
+!!! Exercise 3.3 Installing GUI (Desktop Environment)
+!
+! first, use dnf aka dandified yum package manager to get updates
+dnf update -y
+! then, check for upgrades
+dnf upgrade
+! then, install the GNOME stuff
+dnf -y group install "Basic Desktop" GNOME 
+!switch to gui mode
+startx
+!perform timezone settings in gui or do them via cli like below: 
+!!! put cli cmds here from lab doco
+!
+!!! Exercise 3.4 Installing Software Packages
+!
+!--------------------------------------------------------------------------------
+!NOTE: I had to troubleshoot because I accidentally assigned IP address as per 
+!      step 3.5 below, which prevented the VM from accessing the internet, but
+!      once I temporarily reverted the IP and DNS settings to default, it 
+!      worked again. Took an hour + of debugging though
+!---------------------------------------------------------------------------------
+!
+!install FTP server, no config
+dnf -y install vsftpd
+!
+!install DNS server
+dnf -y install bind bind-utils
+!
+!install DHCP server
+dnf -y install dhcp-server
+!
+!install DHCP client
+dnf -y install dhcp-client
+!
+!install mail server
+!--------------------------------------------------------------------------------!
+!NOTE: needs 2 software components. an SMTP server and a POP or IMAP server
+!--------------------------------------------------------------------------------!
+!
+!install Postfix SMTP
+dnf -y install Postfix
+!
+!install dovecot POP/IMAP server
+dnf -y install dovecot
+!
+!install apache web server
+dnf -y install httpd
+!
+!install file server - SAMBA
+dnf -y install samba
+!
+!install NFS client
+dnf -y install nfs-utils
+!
+!install Squid proxy server
+dnf -y install squid
+!
+!!! Exercise 3.5 Initial Configuration of Fedora
+!
+!--------------------------------------------------------------------------------!
+!NOTE: alternative option is to configure via GUI
+!--------------------------------------------------------------------------------!
+!
+!display network devices
+nmcli device
+!
+!configure IPv4 address
+!EG!nmcli connection modify <device> ipv4.addresses <IP Address>/<CIDR>
+nmcli connection modify ens33 ipv4.addresses 192.168.0.10/24
+!
+!configure DNS
+!EG!nmcli connection modify <device> ipv4.dns <DNS Server IP>
+nmcli connection modify ens33 ipv4.dns 192.168.0.1
+!
+!configure manual setting for static IP
+!EG!nmcli connection modify <device> ipv4.method manual
+nmcli connection modify ens33 ipv4.method manual
+!
+!restart the interface to apply the changes to the settings
+!EG! nmcli connection down <device>; nmcli connection up <device>
+nmcli connection down ens33; nmcli connection up ens33
+!
+!display network settings to check work
+!EG!nmcli device show <device>
+nmcli device show ens33
+!
+!test network connection with other devices on VLAN 
+!
+!--------------------------------------------------------------------------------!
+!NOTE: pings are not expected to work until inbound firewall rules on
+!      SERVER A and SERVER B allow IPv4 traffic. Re-test once firewalls are
+       configured.
+!--------------------------------------------------------------------------------!
+!test SERVER A aka DNS Server
+ping 192.168.0.1 -c 5
+!
+!test SERVER B
+ping 192.168.0.2 -c 5
+!
+!--------------------------------------------------------------------------------!
+!NOTE: within this note block, script language is Powershell to run on
+!      SERVER A and SERVER B to create firewall rules to allow pings
+!
+! PS Script below
+!New-NetFirewallRule -Name 'ICMPv4' -DisplayName 'ICMPv4' -Description 'Allow ICMPv4' -Profile Any -Direction Inbound -Action Allow -Protocol ICMPv4 -Program Any -LocalAddress Any -RemoteAddress Any
+!--------------------------------------------------------------------------------!
+!
+! Change the name of the Fedora server
+!EG!hostnamectl set-hostname <fully qualified domain name>
+hostnamectl set-hostname fedora.adatum.com
+! re boot the Machine
+reboot
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!             LAB 4: INSTALLING DOMAIN CONTROLLER AND CONNECTING               !!
+!!                          COMPUTERS TO THE DOMAIN                             !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 4.1 Installing the Active Directory Domain Services Role
+!
+!!! Exercise 4.2 Creating a New Forest
+!
+!!! Exercise 4.3 Connecting SERVERB to adatum domain
+!
+!!! Exercise 4.4 Connecting WIN10 to adatum domain
+!
+!!! Exercise 4.5 Connecting FEDORA to adatum domain (Fedora Windows integration)
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!               LAB 5: CONFIGURING LOCAL STORAGE (Windows 2019)                !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 5.1 Initializing Disks
+!
+!!! Exercise 5.2 Creating Simple Volumes
+!
+!!! Exercise 5.3 Creating a Storage Pool
+!
+!!! Exercise 5.4 Performing Local Backup
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! LAB 6: CONFIGURING FILE AND SHARE ACCESS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 6.1 Sharing a Folder
+!
+!!! Exercise 6.2 Testing Share Access
+!
+!!! Exercise 6.3 Working with NTFS Permissions
+!
+!!! Exercise 6.4 Creating Shares with Server Manager
+!
+!!! Exercise 6.5 Creating Work Folders
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 7: CONFIGURING PRINT AND DOCUMENT SERVICES
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 7.1 Installing a Printer
+!
+!!! Exercise 7.2 Deploying Printers Using Active Directory
+!
+!!! Exercise 7.3 Scheduling Printer Access
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 8: CONFIGURING SERVERS FOR REMOTE MANAGEMENT
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! Exercise 8.1 Adding Servers to Server Manager
+!
+!!! Exercise 8.2 Working with Remote Servers
+!
+!!! Exercise 8.3 Configuring Windows Firewall
+!
+!!! Exercise 8.4 Using Remote Server Administration Tools
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 9: CALCULATING IPV4 AND IPV6 ADDRESSING
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 9.1 Calculating IPv4 Addresses
+!
+!!! Exercise 9.2 Calculating IPv6 Addresses
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 10: DEPLOYING AND CONFIGURING THE DHCP SERVICE
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 10.1 Installing the DHCP Server Role
+!
+!!! Exercise 10.2 Creating a DHCPv4 Scope
+!
+!!! Exercise 10.3 Creating a DHCPv6 Scope
+!
+!!! Exercise 10.4 Activating DHCP
+!
+!!! Exercise 10.5 Confirming DHCP
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 11: DEPLOYING AND CONFIGURING THE DNS SERVICE
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 11.1 Designing a DNS Namespace
+!
+!!! Exercise 11.2 Remote DNS Administration
+!
+!!! Exercise 11.3 Creating a DNS Zone
+!
+!!! Exercise 11.4 Creating DNS Domains
+!
+!!! Exercise 11.5 Creating DNS Resource Records
+!
+!!! Exercise 11.6 Using Reverse Name Resolution
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 12: CREATING AND MANAGING ACTIVE DIRECTORY GROUPS AND
+ORGANIZATIONAL UNITS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 12.1 Creating Organizational Units
+!
+!!! Exercise 12.2 Creating Domain Local Groups
+!
+!!! Exercise 12.3 Creating Global Groups
+!
+!!! Exercise 12.4 Nesting Groups
+!
+!!! Exercise 12.5 Delegating Administration
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 13: CREATING AND MANAGING ACTIVE DIRECTORY USERS AND COMPUTERS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 13.1 Creating Computer Objects
+!
+!!! Exercise 13.2 Creating a Single User
+!
+!!! Exercise 13.3 Using Active Directory Administrative Center
+!
+!!! Exercise 13.4 Creating Users with Windows PowerShell
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 14: CREATING GROUP POLICY OBJECTS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 14.1 Installing Group Policy Management
+!
+!!! Exercise 14.2 Creating a Starter GPO
+!
+!!! Exercise 14.3 Creating Group Policy Objects
+!
+!!! Exercise 14.4 Linking a Group Policy Object
+!
+!!! Exercise 14.5 Confirming GPO Application
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 15: CONFIGURING SECURITY POLICIES
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 15.1 Configuring Security Policies
+!
+!!! Exercise 15.2 Configuring Audit Policies
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 16: CONFIGURING APPLICATION RESTRICTION POLICIES
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 16.1 Creating Software Restriction Policies
+!
+!!! Exercise 16.2 Using AppLocker
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 17: CONFIGURING WINDOWS FIREWALL
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 17.1 Installing Internet Information Services
+!
+!!! Exercise 17.2 Testing IIS Connectivity
+!
+!!! Exercise 17.3 Creating Windows Firewall Rules
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 18: CONFIGURING WINDOWS NTP SERVER
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 18.1 Configuring NTP server
+!
+!!! Exercise 18.2 Testing NTP server from a client
+!
+!!! Exercise 18.3 Synchronising NTP server with External NTP Server
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 19: DEPLOYING AND MANAGING SERVER IMAGES
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 19.1 Installing and Configuring Windows Deployment Services
+!
+!!! Exercise 19.2 Creating Windows Deployment Images
+!
+!!! Exercise 19.3 Generating an Autounattend.xml File
+!
+!!! Exercise 19.4 Deploying a Windows Image
+!
+!!! Exercise 19.5 Updating a Windows Image
+!
+!!! Exercise 19.6 Performing WDS installation
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 20: IMPLEMENTING PATCH MANAGEMENT
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 20.1 Installing WSUS
+!
+!!! Exercise 20.2 Configuring WSUS
+!
+!!! Exercise 20.3 Configuring Clients
+!
+!!! Exercise 20.4 Approving Updates
+!
+!!! Exercise 20.5 Receiving updates from Clients
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 21: MONITORING SERVERS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 21.1 Using Event Viewer
+!
+!!! Exercise 21.2 Using Reliability Monitor
+!
+!!! Exercise 21.3 Using Task Manager
+!
+!!! Exercise 21.4 Using Resource Monitor
+!
+!!! Exercise 21.5 Using Performance Monitor
+!
+!!! Exercise 21.6 Using third party Diagnose tools
+!
+!!! Exercise 21.7 Monitoring Fedora Server
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 22: CREATING USERS, GROUPS AND CONFIGURING FILE/FOLDER PERMISSION IN
+FEDORA 35
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 22.1 Creating local Users and User Groups in Linux
+!
+!!! Exercise 22.2 Login to Active Directory User accounts from Linux Sever
+!
+!!! Exercise 22.3 Linux Files, Directories and configuring Permission
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 23: CONFIGURING APPLICATIONS AND SERVICES IN FEDORA 35
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 23.1 Configuring FTP Server
+!
+!!! Exercise 23.2 Configuring Basic WEB server
+!
+!!! Exercise 23.3 Configuring Mail Server
+!
+!!! Exercise 23.4 Installing and Configuring Mail client software: Thunderbird
+!
+!!! Exercise 23.5 Configuring Squid proxy Server
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!        LAB 24: FILE SHARING BETWEEN WINDOWS AND FEDORA 35
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 24.1 Configure File Sharing with NFS (Network File System)
+!
+!!! Exercise 24.2 Configuring File Sharing with SMB (SAMBA)
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!       PART 2 Installing, Configuring and Integrating Virtual Machines        !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!         LAB 25: CREATING AND CONFIGURING VIRTUAL MACHINE SETTINGS            !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! Exercise 25.1 Installing the Hyper-V Role
+!
+!!! Exercise 25.2 Creating a Virtual Machine
+!
+!!! Exercise 25.3 Configuring Dynamic Memory
+!
+!!! Exercise 25.4 Creating a VM and Configuring Dynamic Memory 
+!!!                Using Windows PowerShell
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!          LAB 26: CREATING AND CONFIGURING VIRTUAL MACHINE STORAGE            !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! Exercise 26.1 Creating a Virtual Hard Disk
+!
+!!! Exercise 26.2 Editing a Virtual Hard Disk File
+!
+!!! Exercise 26.3 Creating a VM with an Existing Virtual Hard Disk
+!
+!!! Exercise 26.4 Configuring QoS on a Virtual Hard Disk
+!
+!!! Exercise 26.5 Creating a Pass-Through Disk
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!              LAB 27: CREATING AND CONFIGURING VIRTUAL NETWORKS               !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!! Exercise 27.1 Creating a Virtual Switch
+!
+!!! Exercise 27.2 Creating a Virtual Network
+!
+!!! Exercise 27.3 Creating an Isolated Network Using PowerShell
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!         LAB 28: USING A TYPE 1 HYPERVISOR TO CREATE VIRTUAL MACHINES         !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!    
+!!! Exercise 28.1 Installing ESXi host named ESXiA
+!
+!!! Exercise 28.2 Configuring ESXi host
+!
+!!! Exercise 28.3 Creating Virtual Switches
+!
+!!! Exercise 28.4 Working with Virtual Machine’s basic datastore
+!
+!!! Exercise 28.5 Creating Virtual Machines (VMs)
+!
+!!! Exercise 28.6 Initial Configuration and joining the domain
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! DONE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
